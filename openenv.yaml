@@ -1,0 +1,52 @@
+spec_version: 1
+name: health-monitoring-env
+type: space
+runtime: fastapi
+app: server.app:main
+port: 7860
+
+endpoints:
+  reset: /reset
+  step: /step
+  grade: /grade
+  state: /state
+  tasks: /tasks
+
+score:
+  type: float
+  min: 0.01
+  max: 0.99
+
+tasks:
+  - id: vitals_check
+    name: "Vitals Check"
+    description: "Detect elevated heart rate (>100 bpm) and issue at least a warning."
+    difficulty: easy
+    passing_score: 0.5
+    grader:
+      type: score
+      field: score
+      min_score: 0.01
+      max_score: 0.99
+
+  - id: anomaly_detection
+    name: "Anomaly Detection"
+    description: "Respond correctly using both HR and temperature signals."
+    difficulty: medium
+    passing_score: 0.6
+    grader:
+      type: score
+      field: score
+      min_score: 0.01
+      max_score: 0.99
+
+  - id: triage_report
+    name: "Triage Report"
+    description: "Emergency alert when HR>120 OR temp>39. Zero tolerance for wrong action."
+    difficulty: hard
+    passing_score: 0.7
+    grader:
+      type: score
+      field: score
+      min_score: 0.01
+      max_score: 0.99
