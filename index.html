@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Smart Health Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060b14;
+  --card: #0b1220;
+  --card2: #101828;
+  --border: rgba(0,195,255,0.12);
+  --border-h: rgba(0,195,255,0.28);
+  --cyan: #00c3ff;
+  --cyan-dim: rgba(0,195,255,0.15);
+  --green: #00e676;
+  --green-dim: rgba(0,230,118,0.12);
+  --amber: #ffab00;
+  --amber-dim: rgba(255,171,0,0.12);
+  --red: #ff3d5a;
+  --red-dim: rgba(255,61,90,0.12);
+  --text: #a8c0d6;
+  --text-bright: #cde0ef;
+  --text-dim: #304a61;
+  --mono: 'Share Tech Mono', 'Courier New', monospace;
+  --display: 'Orbitron', monospace;
+  --ui: 'DM Sans', system-ui, sans-serif;
+  --r: 10px;
+  --gap: 14px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ui);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* Grid background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,195,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,195,255,0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Header ── */
+header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 52px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(6,11,20,0.85);
+  backdrop-filter: blur(8px);
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-text {
+  font-family: var(--display);
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  color: var(--cyan);
+}
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--green-dim);
+  border: 1px solid rgba(0,230,118,0.25);
+  color: var(--green);
+  transition: all 0.3s;
+}
+.status-pill.warning { background: var(--amber-dim); border-color: rgba(255,171,0,0.25); color: var(--amber); }
+.status-pill.danger  { background: var(--red-dim);   border-color: rgba(255,61,90,0.25);  color: var(--red); }
+.dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: blink 1.6s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+.header-info {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+}
+
+/* ── Layout ── */
+.main {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: var(--gap);
+  padding: var(--gap);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+}
+.card-label {
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+  font-family: var(--mono);
+}
+
+/* ── Vitals row ── */
+.vitals-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: var(--gap);
+}
+.vital-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px 18px;
+  transition: border-color 0.3s;
+}
+.vital-card:hover { border-color: var(--border-h); }
+.vital-num {
+  font-family: var(--display);
+  font-size: 46px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--cyan);
+  transition: color 0.4s;
+}
+.vital-unit {
+  font-size: 14px;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  margin-left: 4px;
+}
+.range-bar {
+  height: 3px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 2px;
+  margin-top: 12px;
+}
+.range-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--cyan);
+  transition: width 0.5s ease, background 0.4s;
+}
+.range-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 9px;
+  color: var(--text-dim);
+  font-family: var(--mono);
+}
+
+/* Action card */
+.action-name {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--cyan);
+  transition: color 0.3s;
+  margin: 6px 0 10px;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 5px;
+  font-family: var(--mono);
+  font-size: 11px;
+  border: 1px solid;
+  transition: all 0.3s;
+}
+.badge-normal  { background:var(--green-dim); border-color:rgba(0,230,118,0.3); color:var(--green); }
+.badge-warning { background:var(--amber-dim); border-color:rgba(255,171,0,0.3); color:var(--amber); }
+.badge-danger  { background:var(--red-dim);   border-color:rgba(255,61,90,0.3); color:var(--red); }
+.badge-muted   { background:rgba(255,255,255,0.04); border-color:var(--border); color:var(--text-dim); }
+
+/* Step counter card */
+.big-num {
+  font-family: var(--display);
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--cyan);
+  line-height: 1;
+  transition: color 0.3s;
+}
+
+/* ── EKG ── */
+.ekg-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 12px 16px 10px;
+}
+#ekgCanvas { display: block; width: 100%; border-radius: 6px; }
+
+/* ── Bottom grid ── */
+.bottom-row {
+  display: grid;
+  grid-template-columns: 300px 1fr 280px;
+  gap: var(--gap);
+}
+
+/* Metrics */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.metric-box {
+  background: rgba(0,195,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 10px 12px;
+}
+.metric-label { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); font-family: var(--mono); margin-bottom: 3px; }
+.metric-val   { font-family: var(--display); font-size: 20px; font-weight: 700; color: var(--cyan); transition: color 0.3s; }
+
+/* Controls */
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+button {
+  padding: 9px 12px;
+  border-radius: 7px;
+  border: 1px solid;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.18s;
+  text-transform: uppercase;
+  background: transparent;
+}
+.btn-c { border-color: rgba(0,195,255,0.35); color: var(--cyan); }
+.btn-c:hover { background: var(--cyan-dim); }
+.btn-g { border-color: rgba(0,230,118,0.35); color: var(--green); }
+.btn-g:hover { background: var(--green-dim); }
+.btn-a { border-color: rgba(255,171,0,0.35); color: var(--amber); }
+.btn-a:hover { background: var(--amber-dim); }
+.btn-r { border-color: rgba(255,61,90,0.35); color: var(--red); }
+.btn-r:hover { background: var(--red-dim); }
+button:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+
+/* Slider */
+.slider-row { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+input[type=range] {
+  flex: 1;
+  height: 3px;
+  accent-color: var(--cyan);
+  cursor: pointer;
+  background: rgba(0,195,255,0.2);
+  border-radius: 2px;
+  border: none;
+  padding: 0;
+  outline: none;
+}
+.slider-val { font-family: var(--mono); font-size: 11px; color: var(--text-dim); min-width: 36px; text-align: right; }
+
+/* Log */
+.log-area {
+  height: 100%;
+  overflow-y: auto;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 2;
+  color: var(--text-dim);
+}
+.log-area::-webkit-scrollbar { width: 3px; }
+.log-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.log-entry { display: flex; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.log-idx { color: var(--text-dim); min-width: 32px; }
+.c-n  { color: var(--green); }
+.c-w  { color: var(--amber); }
+.c-e  { color: var(--red);   }
+.c-s  { color: var(--cyan);  }
+
+/* Task graders */
+.tasks-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--gap);
+}
+.task-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  transition: border-color 0.3s;
+}
+.task-card:hover { border-color: var(--border-h); }
+.diff-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+.diff-e { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,230,118,0.25); }
+.diff-m { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(255,171,0,0.25); }
+.diff-h { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(255,61,90,0.25); }
+.task-title { font-family: var(--display); font-size: 11px; color: var(--text-bright); margin-bottom: 6px; letter-spacing: 0.04em; }
+.task-desc  { font-size: 11px; color: var(--text-dim); line-height: 1.55; margin-bottom: 14px; }
+.task-score-val { font-family: var(--display); font-size: 34px; font-weight: 700; color: var(--cyan); transition: color 0.4s; }
+.score-track { height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; margin-top: 8px; }
+.score-fill  { height: 100%; border-radius: 2px; background: var(--cyan); transition: width 0.5s ease, background 0.4s; width: 0%; }
+.task-status { font-size: 10px; color: var(--text-dim); font-family: var(--mono); margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <div class="logo">
+    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M13 4C9.5 4 7 7 7 10.5c0 5.5 6 10 6 10s6-4.5 6-10C19 7 16.5 4 13 4z" stroke="#00c3ff" stroke-width="1.4" fill="rgba(0,195,255,0.08)"/>
+      <polyline points="1,13 4,13 6,9 8,17 10.5,11 13,15 15.5,9 18,17 20,13 25,13" stroke="#00c3ff" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span class="logo-text">AI HEALTH MONITOR</span>
+  </div>
+  <div class="header-center">
+    <div class="status-pill" id="statusPill"><div class="dot"></div><span id="statusText">STANDBY</span></div>
+  </div>
+  <div class="header-info" id="headerInfo">EPS: — · STEP: 0/20</div>
+</header>
+
+<!-- ── Main ── -->
+<div class="main">
+
+  <!-- Vitals row -->
+  <div class="vitals-row">
+    <!-- Heart Rate -->
+    <div class="vital-card">
+      <div class="card-label">♥ HEART RATE</div>
+      <div style="display:flex;align-items:baseline">
+        <div class="vital-num" id="hrNum">—</div>
+        <span class="vital-unit">BPM</span>
+      </div>
+      <div class="range-bar"><div class="range-fill" id="hrFill" style="width:0%"></div></div>
+      <div class="range-labels"><span>55</span><span>Normal &lt;100</span><span>160</span></div>
+    </div>
+
+    <!-- Temperature -->
+    <div class="vital-card">
+      <div class="card-label">⊕ TEMPERATURE</div>
+      <div style="display:flex;align-items:baseline">
+        <div class="vital-num" id="tempNum">—</div>
+        <span class="vital-unit">°C</span>
+      </div>
+      <div class="range-bar"><div class="range-fill" id="tempFill" style="width:0%"></div></div>
+      <div class="range-labels"><span>36.0</span><span>Normal &lt;38</span><span>40.5</span></div>
+    </div>
+
+    <!-- Action -->
+    <div class="vital-card">
+      <div class="card-label">⚡ AGENT ACTION</div>
+      <div class="action-name" id="actionName">AWAITING RESET</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="badge badge-muted" id="rewardBadge">REWARD: —</span>
+        <span class="badge badge-muted" id="actionCode">ACT: —</span>
+      </div>
+    </div>
+
+    <!-- Step -->
+    <div class="vital-card">
+      <div class="card-label">◎ EPISODE PROGRESS</div>
+      <div style="display:flex;align-items:baseline;gap:4px">
+        <div class="big-num" id="stepNum">0</div>
+        <span class="vital-unit">/ 20</span>
+      </div>
+      <div class="range-bar" style="margin-top:12px">
+        <div class="range-fill" id="stepFill" style="width:0%"></div>
+      </div>
+      <div class="range-labels"><span>START</span><span id="totalRewLabel">REWARD: 0.00</span><span>END</span></div>
+    </div>
+  </div>
+
+  <!-- EKG -->
+  <div class="ekg-wrap">
+    <div class="card-label" style="margin-bottom:8px">ELECTROCARDIOGRAM · LIVE WAVEFORM</div>
+    <canvas id="ekgCanvas" height="90"></canvas>
+  </div>
+
+  <!-- Bottom 3-col -->
+  <div class="bottom-row">
+
+    <!-- Controls -->
+    <div class="card" style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <div class="card-label">METRICS</div>
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <div class="metric-label">STEPS</div>
+            <div class="metric-val" id="mSteps">0</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">REWARD</div>
+            <div class="metric-val" id="mReward">0.00</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">ACCURACY</div>
+            <div class="metric-val" id="mAcc">—</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">STATE</div>
+            <div class="metric-val" id="mState" style="font-size:14px;color:var(--text-dim)">IDLE</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card-label">CONTROLS</div>
+        <div class="btn-row">
+          <button class="btn-c" onclick="doReset()">⟳ RESET</button>
+          <button class="btn-g" id="btnStep" onclick="doStep()" disabled>▶ STEP</button>
+          <button class="btn-a" id="btnAuto" onclick="startAuto()" disabled>⚡ AUTO</button>
+          <button class="btn-r" id="btnStop" onclick="stopAuto()" disabled>■ STOP</button>
+        </div>
+        <div class="card-label" style="margin-top:12px">AUTO SPEED</div>
+        <div class="slider-row">
+          <input type="range" id="speedSlider" min="300" max="2500" step="100" value="900">
+          <span class="slider-val" id="speedLabel">0.9s</span>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;align-items:flex-end">
+        <div style="width:100%;padding:10px 12px;background:rgba(0,195,255,0.04);border:1px solid var(--border);border-radius:7px;font-size:10px;color:var(--text-dim);font-family:var(--mono);line-height:1.6">
+          API: <span style="color:var(--cyan)">same-origin</span><br>
+          SPEC: <span style="color:var(--green)">OpenEnv v1.0</span><br>
+          MODEL: <span style="color:var(--amber)">rule-based fallback</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Log -->
+    <div class="card" style="display:flex;flex-direction:column">
+      <div class="card-label">STEP LOG · TERMINAL OUTPUT</div>
+      <div class="log-area" id="logArea">
+        <div class="log-entry">
+          <span class="log-idx">SYS</span>
+          <span class="c-s">AI Smart Health Monitor v1.0 initialized. Press RESET to begin an episode.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grade summary -->
+    <div class="card" style="display:flex;flex-direction:column;gap:10px">
+      <div class="card-label">LIVE GRADER SCORES</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:11px;color:var(--text-dim);font-family:var(--mono)">EASY</span>
+          <span class="badge diff-e" id="liveEasy">—</span>
+        </div>
+        <div class="score-track"><div class="score-fill" id="liveEasyBar"></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+          <span style="font-size:11px;color:var(--text-dim);font-family:var(--mono)">MEDIUM</span>
+          <span class="badge diff-m" id="liveMed">—</span>
+        </div>
+        <div class="score-track"><div class="score-fill" id="liveMedBar"></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+          <span style="font-size:11px;color:var(--text-dim);font-family:var(--mono)">HARD</span>
+          <span class="badge diff-h" id="liveHard">—</span>
+        </div>
+        <div class="score-track"><div class="score-fill" id="liveHardBar"></div></div>
+      </div>
+      <div style="margin-top:auto;padding-top:12px;border-top:1px solid var(--border)">
+        <div class="card-label">AVG GRADE SCORE</div>
+        <div class="metric-val" id="avgGrade" style="font-size:28px">—</div>
+        <div class="task-status" id="gradeStatus">run an episode to generate scores</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task cards -->
+  <div class="tasks-row">
+    <div class="task-card">
+      <div class="diff-badge diff-e">EASY</div>
+      <div class="task-title">HIGH HR DETECTION</div>
+      <div class="task-desc">Detect elevated heart rate (>100 BPM) and issue at least a warning signal to the monitoring system.</div>
+      <div class="task-score-val" id="easyScore">—</div>
+      <div class="score-track"><div class="score-fill" id="easyBar"></div></div>
+      <div class="task-status" id="easyStatus">no data yet</div>
+    </div>
+    <div class="task-card">
+      <div class="diff-badge diff-m">MEDIUM</div>
+      <div class="task-title">MULTI-SIGNAL RESPONSE</div>
+      <div class="task-desc">Correctly classify vitals using both heart rate AND temperature. Partial credit for adjacent actions.</div>
+      <div class="task-score-val" id="medScore">—</div>
+      <div class="score-track"><div class="score-fill" id="medBar"></div></div>
+      <div class="task-status" id="medStatus">no data yet</div>
+    </div>
+    <div class="task-card">
+      <div class="diff-badge diff-h">HARD</div>
+      <div class="task-title">EMERGENCY DETECTION</div>
+      <div class="task-desc">Issue emergency_alert when HR>120 OR temp>39. No partial credit — critical cases must be exact.</div>
+      <div class="task-score-val" id="hardScore">—</div>
+      <div class="score-track"><div class="score-fill" id="hardBar"></div></div>
+      <div class="task-status" id="hardStatus">no data yet</div>
+    </div>
+  </div>
+
+</div><!-- .main -->
+
+<script>
+// ── EKG ──────────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('ekgCanvas');
+const ctx    = canvas.getContext('2d');
+let ekgBuffer = [];
+let ekgTime   = 0;
+let liveHR    = 75;
+
+function resizeCanvas() {
+  const w = canvas.offsetWidth;
+  if (canvas.width !== w) {
+    canvas.width = w;
+    ekgBuffer = new Array(w).fill(canvas.height / 2);
+  }
+}
+
+function ecgSample(t, hr) {
+  const p = ((t % (60 / hr)) / (60 / hr));
+  if (p < 0.10) return Math.sin(p / 0.10 * Math.PI) * 7;
+  if (p < 0.18) return 0;
+  if (p < 0.21) return -(p - 0.18) / 0.03 * 40;
+  if (p < 0.245){ return ((p - 0.21) / 0.035) * 90 - 40; }
+  if (p < 0.27) return 90 - ((p - 0.245) / 0.025) * 70;
+  if (p < 0.30) return 20 - ((p - 0.27) / 0.03) * 20;
+  if (p < 0.38) return 0;
+  if (p < 0.54) return Math.sin((p - 0.38) / 0.16 * Math.PI) * 14;
+  return 0;
+}
+
+function drawEKG() {
+  resizeCanvas();
+  const W = canvas.width, H = canvas.height, mid = H / 2;
+  ekgTime += 0.011 * (liveHR / 70);
+  const sample = mid - ecgSample(ekgTime, liveHR);
+  ekgBuffer.push(sample);
+  if (ekgBuffer.length > W) ekgBuffer.shift();
+
+  ctx.fillStyle = '#0b1220';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(0,195,255,0.04)';
+  ctx.lineWidth = 0.5;
+  for (let x = 0; x < W; x += 48) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 22) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  // Colour by alert
+  let color = '#00c3ff';
+  if (liveHR > 120) color = '#ff3d5a';
+  else if (liveHR > 100) color = '#ffab00';
+
+  ctx.shadowBlur = 6; ctx.shadowColor = color;
+  ctx.strokeStyle = color; ctx.lineWidth = 1.8; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  for (let i = 0; i < ekgBuffer.length; i++) {
+    if (i === 0) ctx.moveTo(i, ekgBuffer[i]);
+    else ctx.lineTo(i, ekgBuffer[i]);
+  }
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Lead dot
+  const lx = ekgBuffer.length - 1, ly = ekgBuffer[lx];
+  ctx.beginPath(); ctx.arc(lx, ly, 3.5, 0, Math.PI*2);
+  ctx.fillStyle = color; ctx.fill();
+
+  requestAnimationFrame(drawEKG);
+}
+drawEKG();
+window.addEventListener('resize', resizeCanvas);
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let state = null, stepCount = 0, totalReward = 0, autoTimer = null;
+const ACTION_LABEL = ['DO NOTHING','SEND WARNING','EMERGENCY ALERT'];
+const ACTION_CLASS = ['c-n','c-w','c-e'];
+const BADGE_CLASS  = ['badge-normal','badge-warning','badge-danger'];
+const FILL_COLORS  = ['var(--green)','var(--amber)','var(--red)'];
+
+// Grade accumulators
+let gradeAccum = { easy:[],med:[],hard:[] };
+
+// ── API ───────────────────────────────────────────────────────────────────────
+const api = async (path, body) => {
+  const opts = body !== undefined
+    ? { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) }
+    : {};
+  const r = await fetch(path, opts);
+  return r.json();
+};
+
+// ── Rule-based agent (mirrors inference.py fallback) ──────────────────────────
+function agentAction(hr, temp) {
+  if (hr > 120 || temp > 39.0) return 2;
+  if (hr > 100 || temp > 38.0) return 1;
+  return 0;
+}
+
+// ── UI Updates ────────────────────────────────────────────────────────────────
+function setVitals(s) {
+  if (!s) return;
+  const hr = s.heart_rate, temp = s.temperature;
+  liveHR = hr;
+
+  const hrColor  = hr   > 120 ? 'var(--red)' : hr   > 100 ? 'var(--amber)' : 'var(--cyan)';
+  const tmpColor = temp > 39  ? 'var(--red)' : temp > 38  ? 'var(--amber)' : 'var(--cyan)';
+
+  document.getElementById('hrNum').textContent   = hr;
+  document.getElementById('hrNum').style.color   = hrColor;
+  document.getElementById('hrFill').style.width  = ((hr - 55) / 105 * 100).toFixed(1) + '%';
+  document.getElementById('hrFill').style.background = hrColor;
+
+  document.getElementById('tempNum').textContent  = temp.toFixed(1);
+  document.getElementById('tempNum').style.color  = tmpColor;
+  document.getElementById('tempFill').style.width = ((temp - 36) / 4.5 * 100).toFixed(1) + '%';
+  document.getElementById('tempFill').style.background = tmpColor;
+}
+
+function setAction(action, reward) {
+  const name   = ACTION_LABEL[action];
+  const col    = FILL_COLORS[action];
+  const bc     = BADGE_CLASS[action];
+  const rew    = reward.toFixed(2);
+
+  const an = document.getElementById('actionName');
+  an.textContent   = name;
+  an.style.color   = col;
+
+  const rb = document.getElementById('rewardBadge');
+  rb.textContent = 'REWARD: ' + rew;
+  rb.className   = 'badge ' + bc;
+
+  const ac = document.getElementById('actionCode');
+  ac.textContent = 'ACT: ' + action;
+  ac.className   = 'badge ' + bc;
+}
+
+function setStatus(text, tone) {
+  const p = document.getElementById('statusPill');
+  p.className  = 'status-pill' + (tone === 'warn' ? ' warning' : tone === 'danger' ? ' danger' : '');
+  document.getElementById('statusText').textContent = text;
+}
+
+function updateMetrics() {
+  document.getElementById('mSteps').textContent  = stepCount;
+  document.getElementById('mReward').textContent = totalReward.toFixed(2);
+  document.getElementById('stepNum').textContent = stepCount;
+  document.getElementById('stepFill').style.width = (stepCount / 20 * 100) + '%';
+  document.getElementById('totalRewLabel').textContent = 'REWARD: ' + totalReward.toFixed(2);
+  document.getElementById('mAcc').textContent = stepCount > 0 ? (totalReward / stepCount * 100).toFixed(0) + '%' : '—';
+  document.getElementById('headerInfo').textContent = 'EPS: ACTIVE · STEP: ' + stepCount + '/20';
+}
+
+// ── Log ───────────────────────────────────────────────────────────────────────
+function log(cls, idx, msg) {
+  const area = document.getElementById('logArea');
+  const d = document.createElement('div');
+  d.className = 'log-entry';
+  d.innerHTML = '<span class="log-idx">' + String(idx).padStart(3,'0') + '</span>' +
+                '<span class="' + cls + '">' + msg + '</span>';
+  area.appendChild(d);
+  area.scrollTop = area.scrollHeight;
+}
+function sysLog(msg) {
+  const area = document.getElementById('logArea');
+  const d = document.createElement('div');
+  d.className = 'log-entry';
+  d.innerHTML = '<span class="log-idx c-s">SYS</span><span class="c-s">' + msg + '</span>';
+  area.appendChild(d);
+  area.scrollTop = area.scrollHeight;
+}
+
+// ── Graders ───────────────────────────────────────────────────────────────────
+async function runGraders(hr, temp, action) {
+  const tasks = ['easy_task','medium_task','hard_task'];
+  const scores = [];
+  for (const t of tasks) {
+    try {
+      const r = await api('/grade/' + t, { heart_rate: hr, temperature: temp, action });
+      scores.push(r.score);
+    } catch(e) { scores.push(null); }
+  }
+  if (scores[0] !== null) gradeAccum.easy.push(scores[0]);
+  if (scores[1] !== null) gradeAccum.med.push(scores[1]);
+  if (scores[2] !== null) gradeAccum.hard.push(scores[2]);
+  updateGradeUI(scores);
+}
+
+function avg(arr) { return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null; }
+function scoreColor(s) { return s >= 0.8 ? 'var(--green)' : s >= 0.5 ? 'var(--amber)' : 'var(--red)'; }
+
+function updateGradeUI(latest) {
+  const avgE = avg(gradeAccum.easy), avgM = avg(gradeAccum.med), avgH = avg(gradeAccum.hard);
+  const pairs = [
+    ['easyScore','easyBar','easyStatus', avgE, 'easy_task'],
+    ['medScore',  'medBar', 'medStatus',  avgM, 'medium_task'],
+    ['hardScore', 'hardBar','hardStatus', avgH, 'hard_task'],
+  ];
+  pairs.forEach(([sid, bid, stid, sc]) => {
+    if (sc === null) return;
+    document.getElementById(sid).textContent = sc.toFixed(2);
+    document.getElementById(sid).style.color = scoreColor(sc);
+    document.getElementById(bid).style.width = (sc * 100).toFixed(0) + '%';
+    document.getElementById(bid).style.background = scoreColor(sc);
+    document.getElementById(stid).textContent = sc >= 0.5 ? '✓ PASSING' : '✗ FAILING';
+  });
+
+  const live = ['liveEasy','liveMed','liveHard'];
+  const livebar = ['liveEasyBar','liveMedBar','liveHardBar'];
+  [avgE, avgM, avgH].forEach((sc, i) => {
+    if (sc === null) return;
+    document.getElementById(live[i]).textContent = sc.toFixed(2);
+    document.getElementById(livebar[i]).style.width = (sc*100).toFixed(0)+'%';
+    document.getElementById(livebar[i]).style.background = scoreColor(sc);
+  });
+
+  const total = [avgE, avgM, avgH].filter(x=>x!==null);
+  if (total.length) {
+    const overall = total.reduce((a,b)=>a+b,0)/total.length;
+    document.getElementById('avgGrade').textContent = overall.toFixed(2);
+    document.getElementById('avgGrade').style.color = scoreColor(overall);
+    document.getElementById('gradeStatus').textContent = overall >= 0.5 ? '✓ OVERALL PASSING' : '✗ OVERALL FAILING';
+  }
+}
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+async function doReset() {
+  stopAuto();
+  try {
+    const data = await api('/reset', null);
+    state = data.state;
+    stepCount = 0; totalReward = 0;
+    gradeAccum = { easy:[], med:[], hard:[] };
+
+    setVitals(state);
+    document.getElementById('actionName').textContent = 'READY';
+    document.getElementById('actionName').style.color = 'var(--cyan)';
+    document.getElementById('rewardBadge').className = 'badge badge-muted';
+    document.getElementById('rewardBadge').textContent = 'REWARD: —';
+    document.getElementById('actionCode').className = 'badge badge-muted';
+    document.getElementById('actionCode').textContent = 'ACT: —';
+    document.getElementById('mState').textContent = 'ACTIVE';
+    document.getElementById('mState').style.color = 'var(--green)';
+    document.getElementById('logArea').innerHTML = '';
+
+    updateMetrics();
+    setStatus('RUNNING', '');
+    sysLog('Episode reset. Initial vitals: HR=' + state.heart_rate + ' T=' + state.temperature.toFixed(1));
+
+    document.getElementById('btnStep').disabled = false;
+    document.getElementById('btnAuto').disabled = false;
+    document.getElementById('btnStop').disabled = true;
+  } catch(e) {
+    sysLog('ERROR: Cannot reach API. Is the server running? ' + e.message);
+    setStatus('API ERROR', 'danger');
+  }
+}
+
+async function doStep() {
+  if (!state || stepCount >= 20) return;
+  const hr = state.heart_rate, temp = state.temperature;
+  const action = agentAction(hr, temp);
+  try {
+    const data = await api('/step', { action });
+    const reward = data.reward, done = data.done;
+    stepCount++;
+    totalReward += reward;
+
+    const alertLevel = action === 2 ? 2 : action === 1 ? 1 : 0;
+    const cls = ACTION_CLASS[alertLevel];
+    log(cls, stepCount,
+      'HR=' + hr + ' T=' + temp.toFixed(1) +
+      ' → ' + ACTION_LABEL[action] +
+      ' · reward=' + reward.toFixed(2) + (done ? ' [EPISODE DONE]' : ''));
+
+    setVitals(data.state);
+    setAction(action, reward);
+    updateMetrics();
+    await runGraders(hr, temp, action);
+
+    state = data.state;
+
+    if (done) {
+      stopAuto();
+      document.getElementById('mState').textContent = 'DONE';
+      document.getElementById('mState').style.color = 'var(--amber)';
+      document.getElementById('btnStep').disabled = true;
+      document.getElementById('btnAuto').disabled = true;
+      setStatus('COMPLETE', 'warn');
+      sysLog('Episode finished. Total steps: 20 · Total reward: ' + totalReward.toFixed(4));
+    }
+
+    if (action === 2) setStatus('EMERGENCY', 'danger');
+    else if (action === 1) setStatus('WARNING', 'warn');
+    else setStatus('RUNNING', '');
+
+  } catch(e) {
+    sysLog('STEP ERROR: ' + e.message);
+  }
+}
+
+function startAuto() {
+  if (autoTimer) return;
+  document.getElementById('btnAuto').disabled = true;
+  document.getElementById('btnStop').disabled = false;
+  document.getElementById('btnStep').disabled = true;
+  const ms = parseInt(document.getElementById('speedSlider').value);
+  autoTimer = setInterval(async () => {
+    if (stepCount >= 20) { stopAuto(); return; }
+    await doStep();
+  }, ms);
+}
+
+function stopAuto() {
+  clearInterval(autoTimer); autoTimer = null;
+  if (state && stepCount < 20) {
+    document.getElementById('btnAuto').disabled = false;
+    document.getElementById('btnStep').disabled = false;
+  }
+  document.getElementById('btnStop').disabled = true;
+}
+
+document.getElementById('speedSlider').addEventListener('input', function() {
+  document.getElementById('speedLabel').textContent = (parseInt(this.value)/1000).toFixed(1) + 's';
+  if (autoTimer) { stopAuto(); startAuto(); }
+});
+</script>
+</body>
+</html>
