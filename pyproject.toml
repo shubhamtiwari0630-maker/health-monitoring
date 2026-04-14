@@ -1,0 +1,27 @@
+[project]
+name = "health-monitoring-env"
+version = "1.0.0"
+description = "AI Smart Health Monitoring Environment"
+authors = [
+    { name = "Aditya" }
+]
+requires-python = ">=3.10"
+
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "openenv-core>=0.2.0",
+    "openai",
+    "requests",
+]
+
+[project.scripts]
+server = "server.app:main"
+
+[tool.openenv]
+entry_point = "server.app:main"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
